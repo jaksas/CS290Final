@@ -1,0 +1,30 @@
+header{
+	font-weight: bold; 
+	font-size: 150%;
+}
+
+h1{
+	font-weight: bold; 
+	font-size: 90%;
+}
+
+table {border: solid thin;}
+td {
+	border: solid thin; 
+	height: 1.4em; 
+	width: 1.4em; 
+	text-align: center; 
+	border-color: black; 
+	padding: 3px;}
+	
+thead {
+	border: solid thick; 
+	height: 1.8em; 
+	width: 1.8em; 
+	text-align: center; 
+	border-color: black; 
+	padding: 3px;}
+	
+th {
+	border: solid thick; 
+}
