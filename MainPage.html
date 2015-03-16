@@ -11,6 +11,9 @@
 			<h1>CLICK HERE TO LOG OUT:</h1>
 			<input type='button' value='Logout' onclick="logout()">
 		<br>
+			<h1>CLICK HERE TO VISIT THE ADMIN PAGE (MAKE CHANGES TO THE DATABASE):</h1>
+			<input type='button' value='Administrate' onclick="to_admin()">
+		<br><br>
 		<header>Browse Available Flights:</header>
 		<br>
 		<form header='Select_Flight'>
@@ -89,8 +92,8 @@
 			<select name='minutes' id='user_max_time_minutes' value='00' onchange="">'00'	
 			</select>
 			<br>
-			<input type='button' value='Book Flights' onclick="searchFlights(bookFlight, 'flight_Results')">
-			<input type='button' value='Cancel Flights' onclick="searchFlights(unbookFlight, 'flight_Results')">
+			<input type='button' value='Book Flights' onclick="searchFlights(bookFlight, 'flight_Results', 'noton')">
+			<input type='button' value='Cancel Flights' onclick="searchFlights(unbookFlight, 'flight_Results', 'on')">
 		</form>		
 		<br>
 		<div id='table_Head'></div>	

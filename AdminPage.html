@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset='UTF-8'>
+		<title>Flight_Bookings</title>
+		<script src='admin_functions.js'></script>
+		<link rel="stylesheet" type="text/css" href="style.css">
+	</head>
+	<body>
+		<br>
+			<h1>CLICK HERE TO LOG OUT:</h1>
+			<input type='button' value='Logout' onclick="logout()">
+		<br>
+			<h1>CLICK HERE TO GO BACK TO USER PAGE:</h1>
+			<input type='button' value='Go Back' onclick="to_user()">
+		<br><br>
+		<header>Add/Remove Country:</header>
+		<br>
+		<div id='Country_Div'></div>
+		<form header='Country'>
+			<label for='country_name'>Enter Country Name:</label>
+			<input type='text' id='country_name' value=''>
+			<br>
+			<input type='button' value='Delete Country' onclick="adminSimpleMod('country', 'delete', 'country_name'),
+				clearNodeById('flight_Results')">
+			<input type='button' value='Add Country' onclick="adminSimpleMod('country', 'add', 'country_name'),
+				clearNodeById('flight_Results')">
+			<br>
+		</form>	
+		<div id='country_Resp'></div>	
+		
+		<br>
+		<header>Add/Remove City:</header>
+		<br>
+		<div id='City_Div'></div>
+		<form header='City'>
+			<label for='city_name'>Enter City Name:</label>
+			<input type='text' id='city_name' value=''>
+			<br>
+			<label for='country'>Choose Country:</label>
+			<select name='country' id='city_country_name' value='NONE'>
+				<option value="NONE">NONE</option>
+			</select>
+			<br>
+			<input type='button' value='Delete City' onclick="adminFKMod('city', 'delete', 
+					'city_name', 'cid', 'country', 'city_country_name'),
+					clearNodeById('flight_Results')">
+			<input type='button' value='Add City' onclick="adminFKMod('city', 'add', 
+					'city_name', 'cid', 'country', 'city_country_name'),
+					clearNodeById('flight_Results')">
+			<br>
+		</form>	
+		<div id='city_Resp'></div>	
+		
+		<br>
+		<header>Add/Remove Airport:</header>
+		<br>
+		<div id='Airport_Div'></div>
+		<form header='Airport'>
+			<label for='airport_name'>Enter Airport Name:</label>
+			<input type='text' id='airport_name' value=''>
+			<br>
+			<label for='country'>Choose Country:</label>
+			<select name='country' id='airport_country_name' value='NONE' onchange="fillListByID(
+					'country', 'city', 'cid', 'airport_country_name', 'airport_city_name')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='city'>Choose City:</label>
+			<select name='city' id='airport_city_name' value='NONE'>
+				<option value="NONE">NONE</option>
+			</select>
+			<br>
+			<input type='button' value='Delete Airport' onclick="adminFKMod('airport', 'delete', 
+					'airport_name', 'cid', 'city', 'airport_city_name'),
+					clearNodeById('flight_Results')">
+			<input type='button' value='Add Airport' onclick="adminFKMod('airport', 'add', 
+					'airport_name', 'cid', 'city', 'airport_city_name'),
+					clearNodeById('flight_Results')">
+			<br>
+		</form>	
+		<div id='airport_Resp'></div>
+
+		<header>Add/Remove Crew Member:</header>
+		<br>
+		<div id='Crew_Div'></div>
+		<form header='Crew'>
+			<label for='crew_name'>Enter Crew Member Name:</label>
+			<input type='text' id='crew_name' value=''>
+			<br>
+			<input type='button' value='Delete Crew Member' onclick="adminSimpleMod('crew', 'delete', 'crew_name'),
+				clearNodeById('flight_Results')">
+			<input type='button' value='Add Crew Member' onclick="adminSimpleMod('crew', 'add', 'crew_name'),
+				clearNodeById('flight_Results')">
+			<br>
+		</form>	
+		<div id='crew_Resp'></div>	
+		
+		<br>
+		<header>Add Flight:</header>
+		<br>
+		<div id='Flight_Div'></div>
+		<form header='Flight'>
+			<label for='country_depart'>Choose Departure Country:</label>
+			<select name='country' id='country_depart' value='NONE' onchange="
+					fillListByID('country', 'city', 'cid', 'country_depart', 'city_depart'),
+					clearListByID('airport_depart')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='city_depart'>Choose Departure City:</label>
+			<select name='city' id='city_depart' value='NONE' onchange="
+					fillListByID('city', 'airport', 'cid', 'city_depart', 'airport_depart')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='airport_depart'>Choose Departure Airport:</label>
+			<select name='airport' id='airport_depart' value='NONE'>
+				<option value="NONE">NONE</option>
+			</select>
+			<br> 
+			<label for='country_arrive'>Choose Destination Country:</label>
+			<select name='country' id='country_arrive' value='NONE' onchange="
+					fillListByID('country', 'city', 'cid', 'country_arrive', 'city_arrive'),
+					clearListByID('airport_arrive')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='city_arrive'>Choose Destination City:</label>
+			<select name='city' id='city_arrive' value='NONE' onchange="
+					fillListByID('city', 'airport', 'cid', 'city_arrive', 'airport_arrive')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='airport_arrive'>Choose Destination Airport:</label>
+			<select name='airport' id='airport_arrive' value='NONE'>
+				<option value="NONE">NONE</option>
+			</select>
+			<br>	
+			<label for='depart_time_day'>Choose Departure Date:</label><br>
+			<select name='day' id='depart_time_day' value='NONE' onchange="">	
+			</select>
+			<select name='month' id='depart_time_month' value='NONE' onchange=
+					"updateDays(this, 'depart_time_day')">	
+			</select>
+			<select name='year' id='depart_time_year' value='NONE' onchange=
+					"updateMonths(this, 'depart_time_month')">
+			</select>
+			<br> 	
+			<label for='depart_time_hour'>Choose Departure Time (GMT):</label><br>
+			<select name='hour' id='depart_time_hour' value='00' onchange="">'00'	
+			</select>
+			<label for='depart_time_minutes'>:</label>
+			<select name='minutes' id='depart_time_minutes' value='00' onchange="">'00'	
+			</select>
+			<br>
+			<label for='arrive_time_day'>Choose Arrival Date:</label><br>
+			<select name='day' id='arrive_time_day' value='NONE' onchange="">	
+			</select>
+			<select name='month' id='arrive_time_month' value='NONE' onchange=
+					"updateDays(this, 'arrive_time_day')">
+			</select>
+			<select name='year' id='arrive_time_year' value='NONE' onchange=
+					"updateMonths(this, 'arrive_time_month')">					
+			</select>
+			<br> 
+			<label for='arrive_time_hour'>Choose Arrival Time (GMT):</label><br>
+			<select name='hour' id='arrive_time_hour' value='00' onchange="">'00'	
+			</select>
+			<label for='arrive_time_minutes'>:</label>
+			<select name='minutes' id='arrive_time_minutes' value='00' onchange="">'00'	
+			</select>
+			<br>
+			<label for='capacity'>Choose Capacity in Range [1, 500]:</label>
+			<input type="number" id='capacity' value='200' min='1' max='500'>
+			<br>
+			<label for='booked'>Choose Flights Already Booked in Range [0, Capacity]:</label>
+			<input type="number" id='booked' value='0' min='0' max='500'>
+			<br>
+			<input type='button' value='Add Flight' onclick="addFlight(), clearNodeById('flight_Results')">
+			<br>
+			<div id='flight_Resp'></div>
+		</form>	
+		
+		<br>
+		<header>Browse Available Flights:</header>
+		<br>
+		<form header='Select_Flight'>
+			<label for='user_country_depart'>Choose Departure Country:</label>
+			<select name='country' id='user_country_depart' value='NONE' onchange="
+					fillListByID('country', 'city', 'cid', 'user_country_depart', 'user_city_depart'),
+					clearListByID('user_airport_depart')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='user_city_depart'>Choose Departure City:</label>
+			<select name='city' id='user_city_depart' value='NONE' onchange="
+					fillListByID('city', 'airport', 'cid', 'user_city_depart', 'user_airport_depart')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='user_airport_depart'>Choose Departure Airport:</label>
+			<select name='airport' id='user_airport_depart' value='NONE'>
+				<option value="NONE">NONE</option>
+			</select>
+			<br>		
+			<label for='user_country_arrive'>Choose Destination Country:</label>
+			<select name='country' id='user_country_arrive' value='NONE' onchange="
+					fillListByID('country', 'city', 'cid', 'user_country_arrive', 'user_city_arrive'),
+					clearListByID('user_airport_arrive')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='user_city_arrive'>Choose Destination City:</label>
+			<select name='city' id='user_city_arrive' value='NONE' onchange="
+					fillListByID('city', 'airport', 'cid', 'user_city_arrive', 'user_airport_arrive')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='user_airport_arrive'>Choose Destination Airport:</label>
+			<select name='airport' id='user_airport_arrive' value='NONE'>
+				<option value="NONE">NONE</option>
+			</select>
+			<br>
+			<h1>SEARCH FLIGHTS BY TIME/LOCATION (SELECT DATE/TIME RANGE FOR YOUR FLIGHT):</h1>
+			<label for='user_min_time_day'>Departure Date (Min):</label><br>
+			<select name='day' id='user_min_time_day' value='NONE' onchange="">	
+			</select>
+			<select name='month' id='user_min_time_month' value='NONE' onchange=
+					"updateDays(this, 'user_min_time_day')" onload = 
+					"updateDays(this, 'user_min_time_day')">	
+			</select>
+			<select name='year' id='user_min_time_year' value='NONE' onchange=
+					"updateMonths(this, 'user_min_time_month')" onload = 
+					"updateMonths(this, 'user_min_time_month')">	
+			</select>
+			<br> 		
+			<label for='user_min_time_hour'>Departure Time (Min):</label><br>
+			<select name='hour' id='user_min_time_hour' value='00' onchange="">'00'	
+			</select>
+			<label for='user_min_time_minutes'>:</label>
+			<select name='minutes' id='user_min_time_minutes' value='00' onchange="">'00'	
+			</select>
+			<br>		
+			<label for='user_max_time_day'>Departure Date (Max):</label><br>
+			<select name='day' id='user_max_time_day' value='NONE' onchange="">	
+			</select>
+			<select name='month' id='user_max_time_month' value='NONE' onchange=
+					"updateDays(this, 'user_max_time_day')
+					updateDays(this, 'user_max_time_day')";					 
+				onload = 
+					"updateDays(this, 'user_max_time_day')">	
+			</select>
+			<select name='year' id='user_max_time_year' value='NONE' onchange=
+					"updateMonths(this, 'user_max_time_month'); 
+					updateMonths(this, 'user_max_time_month')"					
+				onload = 
+					"updateMonths(this, 'user_max_time_month')">
+			</select>
+			<br> 	
+			<label for='user_max_time_hour'>Departure Time (Max):</label><br>
+			<select name='hour' id='user_max_time_hour' value='00' onchange="">'00'	
+			</select>
+			<label for='user_max_time_minutes'>:</label>
+			<select name='minutes' id='user_max_time_minutes' value='00' onchange="">'00'	
+			</select>
+			<br>
+			<h1>SEARCH FLIGHTS BY SELECTED CREW MEMBER (CHANGING THIS FIELD CLEARS SEARCH RESULTS):</h1>
+			<select name='crew' id='all_crew_name' value='NONE' onchange="clearNodeById('flight_Results')"></select>
+			<br>
+			<input type='button' value='Book Flights' onclick="searchFlights(bookFlight, 'flight_Results')">
+			<input type='button' value='Delete Flights' onclick="searchFlights(deleteFlights, 'flight_Results')">
+			<input type='button' value='Add Crew Member to Flights' onclick="searchFlightsStaff(staffFlights, 'noton', 'flight_Results')">
+			<input type='button' value='Remove Crew Member from Flights' onclick="searchFlightsStaff(destaffFlights, 'on', 'flight_Results')">
+		</form>		
+		<br>
+		<div id='flight_Results'></div>		
+	</body>
+</html>

@@ -3,60 +3,17 @@
 references are updated dynamically when the corresponding value from
 the reference table is selected*/
 window.onload = function() {
-	checkSessionStatus();
 	fillLists('country'); 
 	updateTimes('year', fillYears); 
 	fillTimes('hour', 0, 23);
-	fillTimes('minutes', 0, 59);
-	searchFlights(unbookFlight, 'flight_Results', 'all'); 
+	fillTimes('minutes', 0, 59); 
+	fillCrew(); 
 };
 
-/*FUNCTION: checkSessionStatus*/
-function checkSessionStatus() {
-	var req = new XMLHttpRequest();
-	var url = 'main.php?session_q=session';
-	if (!req) {
-		throw 'Unable to create HttpRequest.';
-	}
-	
-	req.open('GET', url, true);
-	
-	//Print out results and dynamically update tables 		
-	req.onreadystatechange = function() {	
-		if (this.readyState == 4) {
-			
-			var response = req.responseXML.getElementsByTagName("response_text")[0].innerHTML; 
-			if (response == "false") {
-				window.location="Login.html";
-			}
-			else {
-				document.body.hidden = false; 
-			}
-		}
-	};
-	
-	 //Send the request
-	 req.send(null);
-}
-
-/*FUNCTION: logout()
-Ends the current session and redirects to login screen*/
-function logout() {
-	var req = new XMLHttpRequest();
-	var url = 'main.php?session_end=end';
-	if (!req) {
-		throw 'Unable to create HttpRequest.';
-	}
-	req.open('GET', url, true);
-	req.send(null);
-	window.location="Login.html";
-}
-
-/*FUNCTION: to_admin()
-Moves user to the admin page, where the database can be altered-
-countries, cities, flights added and deleted, etc.. */
-function to_admin() {
-	window.location="AdminPage.html";
+/*FUNCTION: to_user()
+Moves user to the main user page*/
+function to_user() {
+	window.location="MainPage.html";
 }
 
 /*FUNCTION: adminSimpleMod
@@ -71,7 +28,7 @@ function adminSimpleMod(_table, _type, _field) {
 	//Error test - don't send blank fields to PHP 
 	if (document.getElementById(_field).value != '') {
 		var req = new XMLHttpRequest();
-		var url = 'main.php';
+		var url = 'admin.php';
 
 		if (!req) {
 			  throw 'Unable to create HttpRequest.';
@@ -131,7 +88,7 @@ function adminFKMod(_table, _type, _field, _fk, _ref, _refVal) {
 	//Proceed to send request if input is validated 
 	else {
 		var req = new XMLHttpRequest();
-		var url = 'main.php';
+		var url = 'admin.php';
 
 		if (!req) {
 			  throw 'Unable to create HttpRequest.';
@@ -162,13 +119,103 @@ function adminFKMod(_table, _type, _field, _fk, _ref, _refVal) {
 	}
 }
 
+/*FUNCTION: addFlight
+Description: Specialized function to handle the most complex insertion-
+additions to the flight table
+*/
+function addFlight () {
+	
+	//Make datetime objects for arrival, departure date times
+	var depart_date = new Date();
+	depart_date.setFullYear(depart_time_year.value); 
+	depart_date.setMonth(depart_time_month.value);
+	depart_date.setDate(depart_time_day.value);
+	depart_date.setHours(depart_time_hour.value);
+	depart_date.setMinutes(depart_time_minutes.value);
+	depart_date.setSeconds(0); 
+	
+	//Build arrival date
+	var arrive_date = new Date();
+	arrive_date.setFullYear(arrive_time_year.value); 
+	arrive_date.setMonth(arrive_time_month.value);
+	arrive_date.setDate(arrive_time_day.value);
+	arrive_date.setHours(arrive_time_hour.value);
+	arrive_date.setMinutes(arrive_time_minutes.value);
+	arrive_date.setSeconds(0); 
+	
+	//Set the booked and capacity attributes 
+	var booked = parseInt(document.getElementById('booked').value);
+	var capacity = parseInt(document.getElementById('capacity').value);
+	
+	//Error testing - can't go back in time!
+	if (arrive_date.getTime() <= depart_date.getTime()) {
+		document.getElementById('flight_Resp').innerHTML = 
+			'Our planes aren\'t that fast!!!'
+	}
+	
+	//Validate numeric input
+	else if (isNaN(booked) || isNaN(capacity)) {
+		document.getElementById('flight_Resp').innerHTML = 
+			'Invalid entry for flight capacity or number flights booked! Must be an integer!'; 
+	}
+	
+	else if (capacity < 1 || capacity > 500 || booked < 0) {
+		document.getElementById('flight_Resp').innerHTML = 
+			'Please verify capacity and amount of booked flights are in range!'; 
+	}
+	
+	else if (booked > capacity) {
+		document.getElementById('flight_Resp').innerHTML = 
+			'You can\'t fit that many people on that plane!'; 
+	}
+	
+	//Flights require both destination and departure points
+	else if (airport_depart.value == 'NONE' || airport_arrive.value == 'NONE') {
+		document.getElementById('flight_Resp').innerHTML = 
+			'Two airports must be selected!'; 
+	}
+	
+	//Proceed to send request 
+	else {
+		var req = new XMLHttpRequest();
+		var url = 'admin.php';
+
+		if (!req) {
+			  throw 'Unable to create HttpRequest.';
+		}
+		
+		//Create URL 
+		url += '?action_type=flight&action=add_flight'
+		url += '&source=' + airport_depart.value;  
+		url += '&destination=' + airport_arrive.value;
+		url += '&depart=' + depart_date.toISOString();
+		url += '&arrive=' + arrive_date.toISOString();
+		url += '&capacity=' + document.getElementById('capacity').value;
+		url += '&booked=' + document.getElementById('booked').value;
+		
+		console.log(url); 
+
+		req.open('GET', url, true);
+					
+		//Report results 
+		req.onreadystatechange = function() {	
+			if (this.readyState == 4) {
+				document.getElementById('flight_Resp').innerHTML=req.responseText;
+			}
+		};
+		
+		 //Send the request
+		 req.send(null);		
+	}		
+}
+
 /*FUNCTION: searchFlights
 Description: Specialized function to handle selections from the flight table
 16 different varieties of query are possible, depending on the specificity of 
 the search (anywhere to anywhere being least specific, and airport to airport
 being most specific). All flights are passed with two datetime fields. 
 */
-function searchFlights (button_maker, _ID, _search) {
+function searchFlights (button_maker, _ID) {
 
 	//Lower bound of datetime range
 	var min_date = new Date();
@@ -181,13 +228,7 @@ function searchFlights (button_maker, _ID, _search) {
 	
 	//Upper bound of datetime range
 	var max_date = new Date();
-	if (_search === 'all') {
-		max_date.setFullYear(Number(user_max_time_year.value)+2); 
-		_search = 'on'; 
-	}
-	else {
-		max_date.setFullYear(user_max_time_year.value); 
-	}
+	max_date.setFullYear(user_max_time_year.value); 
 	max_date.setMonth(user_max_time_month.value);
 	max_date.setDate(user_max_time_day.value);
 	max_date.setHours(user_max_time_hour.value);
@@ -203,15 +244,14 @@ function searchFlights (button_maker, _ID, _search) {
 	//Proceed to request
 	else {
 		var req = new XMLHttpRequest();
-		var url = 'main.php';
+		var url = 'admin.php';
 
 		if (!req) {
 			  throw 'Unable to create HttpRequest.';
 		}
 		
 		//Build URL
-		url += '?searchtype=' + _search; 
-		url += '&action_type=flight&action=select'
+		url += '?action_type=flight&action=select'
 		url += '&country_depart=' + user_country_depart.value;  
 		url += '&country_arrive=' + user_country_arrive.value;
 		url += '&city_depart=' + user_city_depart.value;
@@ -226,15 +266,6 @@ function searchFlights (button_maker, _ID, _search) {
 		//Flight selections will be presented as a table 
 		req.onreadystatechange = function() {	
 			if (this.readyState == 4) {
-				clearNodeById ('table_Head');
-				var heading = document.createElement('h1');
-				if (button_maker === bookFlight) {
-					heading.innerHTML = 'Here Are The Available Flights Meeting Your Criteria';
-				}
-				else if (button_maker === unbookFlight) {
-					heading.innerHTML = 'Here Are Your Current Flights';
-				}
-				document.getElementById('table_Head').appendChild(heading);
 				makeTable(req, button_maker, _ID);
 			}
 		};
@@ -242,6 +273,43 @@ function searchFlights (button_maker, _ID, _search) {
 		 //Send the request
 		 req.send(null);		
 	}			
+}
+
+/*FUNCTION: searchFlightsStaff
+Description: Handles searches for crew members
+*/
+function searchFlightsStaff (button_maker, _search, _ID) {
+
+	//Input field cannot be NONE 
+	if (document.getElementById('all_crew_name').value == 'NONE') {
+		document.getElementById('flight_Results').innerHTML = 'You must select a crew member!'; 
+	}
+	
+	else {
+		var req = new XMLHttpRequest();
+		var url = 'admin.php';
+		var crewList = document.getElementById('all_crew_name');
+
+		if (!req) {
+			  throw 'Unable to create HttpRequest.';
+		}
+		
+		url += '?action_type=flight&action=getstaff';
+		url += '&searchtype=' + _search; 
+		url += '&crew_number=' + crewList.options[crewList.selectedIndex].value;
+		
+		req.open('GET', url, true);
+						
+		req.onreadystatechange = function() {	
+		
+			if (this.readyState == 4) {
+				makeTable(req, button_maker, _ID);
+			}
+		};
+			
+		//Send the request
+		 req.send(null);	
+	}	
 }
 
 /*FUNCTION: fillListByID
@@ -254,7 +322,7 @@ function fillListByID(_ref, _table, _fk, _refID, _ID) {
 	clearListByID(_ID);
 		
 	var req = new XMLHttpRequest();
-    var url = 'main.php';
+    var url = 'admin.php';
 	
     if (!req) {
           throw 'Unable to create HttpRequest.';
@@ -299,7 +367,7 @@ Description: For use with populating all menus with the same name with valid val
 function fillLists(_table) {
 		
 	var req = new XMLHttpRequest();
-    var url = 'main.php';
+    var url = 'admin.php';
 	
      if (!req) {
           throw 'Unable to create HttpRequest.';
@@ -347,7 +415,7 @@ duplicate names
 function fillCrew() {
 		
 	var req = new XMLHttpRequest();
-    var url = 'main.php';
+    var url = 'admin.php';
 	
      if (!req) {
           throw 'Unable to create HttpRequest.';
@@ -396,7 +464,7 @@ function fillCrew() {
 	 req.send(null);
 }
 
-/*FUNCTION: clearListById
+/*FUNCTION: fillCrew
 Description: Specialized function for dealing with filling the crew member list.
 Each crew member is listed with ID number in order to distinguish between 
 duplicate names 
@@ -681,34 +749,12 @@ function bookFlight (button, id_num, row) {
 				booked += 1;
 				row.childNodes[9].innerHTML = booked; 	
 				row.childNodes[9].innerHTML = booked; 
-				bindBooking(row);
-				sendBooking(row);
-				row.parentNode.removeChild(row);
+				sendBooking(row);		
 			}
 			else {
 				button.innerHTML = 'This Flight is Full!';
 			}
 		}
-	}
-}
-
-/*FUNCTION: unbookFlight - button making function- creates the button to unbook a flight
-to a flight 
-*/
-function unbookFlight (button, id_num, row) {
-	
-	var booked; 
-	button.id = "cancel" + id_num; 
-	
-	button.appendChild(document.createTextNode('Cancel This Flight'));
-	button.onclick = function() {
-		booked = Number(row.childNodes[9].innerHTML); 
-		booked -= 1;
-		row.childNodes[9].innerHTML = booked; 	
-		row.childNodes[9].innerHTML = booked; 
-		unbindBooking(row);
-		cancelBooking(row);
-		row.parentNode.removeChild(row);
 	}
 }
 
@@ -757,7 +803,7 @@ function destaffFlights (button, id_num, row) {
 function sendBooking (row) {
 
 	var req = new XMLHttpRequest();
-    var url = 'main.php';
+    var url = 'admin.php';
 	
      if (!req) {
           throw 'Unable to create HttpRequest.';
@@ -772,74 +818,13 @@ function sendBooking (row) {
 	 req.send(null);
 }
 
-/*FUNCTION: cancelBooking - submits an update to the database when a flight is booked
-(cancel a flight button was pressed) 
-*/
-function sendBooking (row) {
-
-	var req = new XMLHttpRequest();
-    var url = 'main.php';
-	
-     if (!req) {
-          throw 'Unable to create HttpRequest.';
-    }
-		
-	url += '?action_type=flight&action=cancel';
-	url += '&flight_number=' + row.id; 
-			
-	req.open('GET', url, true);
-				
-     //Send the request
-	 req.send(null);
-}
-
-/*FUNCTION: bindBooking - links a user to a flight
-*/
-function bindBooking (row) {
-
-	var req = new XMLHttpRequest();
-    var url = 'main.php';
-	
-     if (!req) {
-          throw 'Unable to create HttpRequest.';
-    }
-		
-	url += '?action_type=flight&action=bind';
-	url += '&flight_number=' + row.id; 
-			
-	req.open('GET', url, true);
-				
-     //Send the request
-	 req.send(null);
-}
-
-/*FUNCTION: unbindBooking - unlinks a user from a flight
-*/
-function unbindBooking (row) {
-
-	var req = new XMLHttpRequest();
-    var url = 'main.php';
-	
-     if (!req) {
-          throw 'Unable to create HttpRequest.';
-    }
-		
-	url += '?action_type=flight&action=unbind';
-	url += '&flight_number=' + row.id; 
-			
-	req.open('GET', url, true);
-				
-     //Send the request
-	 req.send(null);
-}
-
-/*FUNCTION: sendDeleteFlight - submits an update to the database when a flight is deleted
+/*FUNCTION: sendBooking - submits an update to the database when a flight is deleted
 (bdelete a flight button was pressed) 
 */
 function sendDeleteFlight (row) {
 	
 	var req = new XMLHttpRequest();
-    var url = 'main.php';
+    var url = 'admin.php';
 	
 	if (!req) {
           throw 'Unable to create HttpRequest.';
@@ -860,7 +845,7 @@ is added to a flight (staff flight button was pressed)
 function sendStaffFlight (row) {
 	
 	var req = new XMLHttpRequest();
-    var url = 'main.php';
+    var url = 'admin.php';
 	var crewList = document.getElementById('all_crew_name'); 
 	
 	if (!req) {
@@ -885,7 +870,7 @@ member is added to a flight (delete staff flight was pressed)
 function deleteStaffFlight (row) {
 	
 	var req = new XMLHttpRequest();
-    var url = 'main.php';
+    var url = 'admin.php';
 	var crewList = document.getElementById('all_crew_name'); 
 	
 	if (!req) {
@@ -906,6 +891,7 @@ function deleteStaffFlight (row) {
 
 /*FUNCTION: clearNodesByID - Removes all child nodes of the node with the given ID */
 function clearNodeById (_ID) {
+	console.log('hey');
 	node = document.getElementById(_ID);
 	while (node.firstChild) {
 		node.removeChild(node.firstChild);

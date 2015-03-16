@@ -1,5 +1,4 @@
 <?php
-session_start();
 header('Content-Type: text/xml');
 ini_set('display_errors', 'On');
 include 'hiddenInfo.php';
@@ -21,7 +20,7 @@ function adminResult ($stmt, $dxml) {
 	}
 	
 	else if (strpos($stmt->error, "foreign key") !== FALSE) {
-		$dxml->addChild("response_text", "Deleting that entry would destroy other entries!"); 
+		$dxml->addChild("response_text", "Deleting that entry violates a foreign key constraint!"); 
 	}
 	
 	// No errors 
@@ -77,102 +76,7 @@ if ($mysql->connect_errno) {
 //Response to Javascript
 $dxml = new SimpleXMLElement('<xml/>');
 
-//Block 0: Validate login info
-if (isset ($_POST['type'])) {
-	
-	if ($_POST['type'] == 'new') {
-		$q_def = "INSERT INTO user (user_name, password) VALUES (?, ?)";
-	}
-	
-	else {
-		$q_def = "SELECT * FROM user WHERE user_name = ? AND password = ?";
-	}
-	
-	$stmt = $mysql->prepare($q_def);
-	$stmt->bind_param("ss",$_POST['user'],$_POST['password']);
-	$stmt->execute();
-
-	if(substr($stmt->error, 0, 9) === 'Duplicate') { 
-		$dxml->addChild("response_text", "That user already exists!"); 
-	} 	
-
-	else if($stmt->error != '') {
-		$dxml->addChild("response_text", "There was an error during account creation 
-			or login: ".$stmt->error); 
-	}
-	
-	else if ($_POST['type'] == 'new') {
-		$dxml->addChild("response_text", "success"); 
-		$_SESSION['admit'] = 'true';
-		$_SESSION['user_name'] = $_POST['user'];	
-	}
-	
-	else {
-		$result = $stmt->get_result();
-		if ($result->num_rows === 0) {
-			$dxml->addChild("response_text", "That combination of user name and password 
-			does not exist"); 
-		}
-		else {
-			$dxml->addChild("response_text", "success"); 
-			$_SESSION['admit'] = 'true'; 
-			$_SESSION['user_name'] = $_POST['user'];	
-		}
-	}
-	
-	print($dxml->asXML());	
-	
-	$q_def = "SELECT user_id FROM user WHERE user_name = ?";
-	$stmt = $mysql->prepare($q_def);
-	$stmt->bind_param("s",$_POST['user']);
-	$stmt->execute();
-	$result = $stmt->get_result();	
-	$entries = $result->fetch_array(MYSQLI_NUM);
-	$_SESSION['user_id'] = $entries[0]; 
-	$stmt->close();	
-}
-
-//Block 1a: Validate existing session
-if (isset ($_GET['session_q'])) {
-	if (!isset($_SESSION['admit'])) {
-		$dxml->addChild("response_text", "false");
-	}
-	else if (isset($_SESSION['admit']) && $_SESSION['admit'] == 'true'){
-		$dxml->addChild("response_text", "true");
-	}
-	print($dxml->asXML());		
-}
-
-//Block 1b: End session 
-if (isset ($_GET['session_end'])) {
-	$_SESSION = []; 
-	session_destroy();	
-}
-
-//Block 1c: Handles linking users to flights
-else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'bind') {
-		
-	$q_def = "INSERT INTO user_flight (uid, fid) VALUES ((SELECT user_id FROM user
-		WHERE user.user_Name = ?), ?)"; 
-	$stmt = $mysql->prepare($q_def);
-	$stmt->bind_param("sd", $_SESSION['user_name'],  $_GET['flight_number']);
-	$stmt->execute();
-	$stmt->close();		
-}
-
-//Block 1d: Handles delinking users from flights
-else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'unbind') {
-	
-	$q_def = "DELETE FROM user_flight WHERE user_flight.fid = ? AND (
-		SELECT user.user_id FROM user WHERE user.user_name = ?)";
-	$stmt = $mysql->prepare($q_def);
-	$stmt->bind_param("ds", $_GET['flight_number'], $_SESSION['user_name']);
-	$stmt->execute();
-	$stmt->close();		
-}
-
-
-//Block 2: Handles deletions, additions, and selections from tables without FK references
+//Block 1: Handles deletions, additions, and selections from tables without FK references
 if(isset($_GET['action_type']) && $_GET['action_type'] == 'simple') {
 
 	$q_def;
@@ -238,7 +142,7 @@ if(isset($_GET['action_type']) && $_GET['action_type'] == 'simple') {
 	$stmt->close();	
 }
 
-//Block 3: Handles deletions and additions from tables with FK references
+//Block 2: Handles deletions and additions from tables with FK references
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'fk' && $_GET['action'] != 'select') {
 		
 	//Determine action to perform on table 
@@ -291,7 +195,7 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'fk' && $_GET['ac
 	$stmt->close();	
 }
 
-//Block 4: Handles selections from tables by foreign key reference
+//Block 3: Handles selections from tables by foreign key reference
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'fk' && $_GET['action'] == 'select') {
 		
 	//Build query
@@ -324,7 +228,7 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'fk' && $_GET['ac
 	$stmt->close();	
 }
 
-//Block 5: Handles additions to the flight table 
+//Block 4: Handles additions to the flight table 
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'add_flight') {
 	
 	//Build query
@@ -344,7 +248,7 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 	$stmt->close();	
 }
 
-//Block 6: Handles flight bookings 
+//Block 5: Handles flight bookings 
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'book') {
 	
 	$q_def = "UPDATE flight SET booked = booked + 1 WHERE flight.flight_id = ?"; 
@@ -354,17 +258,7 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 	$stmt->close();		
 }
 
-//Block 6a: Handles flight cancellations
-else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'cancel') {
-	
-	$q_def = "UPDATE flight SET booked = booked - 1 WHERE flight.flight_id = ?"; 
-	$stmt = $mysql->prepare($q_def);
-	$stmt->bind_param("d", $_GET['flight_number']);
-	$stmt->execute();
-	$stmt->close();		
-}
-
-//Block 7: Handles flight deletions
+//Block 6: Handles flight deletions
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'delete') {
 	
 	$q_def = "DELETE FROM flight WHERE flight.flight_id = ?"; 
@@ -374,7 +268,7 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 	$stmt->close();		
 }
 
-//Block 8: Handles crew member additions to flights
+//Block 7: Handles crew member additions to flights
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'staff') {
 	
 	$q_def = "INSERT INTO crew_flight (cid, fid) VALUES (?, ?)"; 
@@ -384,7 +278,7 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 	$stmt->close();		
 }
 
-//Block 9: Handles crew member deletions from flights
+//Block 8: Handles crew member deletions from flights
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'destaff') {
 	
 	$q_def = "DELETE FROM crew_flight WHERE crew_flight.cid = ? AND crew_flight.fid = ?"; 
@@ -394,7 +288,7 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 	$stmt->close();		
 }
 
-//Block : Handles searches for flights with crew members included or not included 
+//Block 9: Handles searches for flights with crew members included or not included 
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'getstaff') {
 					
 	if ($_GET['searchtype'] == 'noton') {
@@ -455,50 +349,29 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 	$stmt->close();		
 }
 
-//Block 11: Handles searches on the flight table  
+//Block 10: Handles searches on the flight table  
 else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET['action'] == 'select') {
-			
+	
 	$param_arr = array(); 
 	
-	if ($_GET['searchtype'] == 'noton') {
-		$q_def =  
-			"SELECT flight.flight_id, country.name, city.name, airport.name, flight.departure_time, 
-			A.country_name, A.city_name, A.airport_name, A.arrival_time, 
-			flight.capacity, flight.booked
-			FROM airport, city, country, flight 
-			INNER JOIN ( 
-				SELECT flight.flight_id, 
-				airport.name AS airport_name, 
-				city.name AS city_name, 
-				country.name AS country_name, 
-				flight.arrival_time 
-				FROM airport, city, country, flight 
-				WHERE flight.destination = airport.airport_id 
-				AND airport.cid = city.city_id 
-				AND city.cid = country.country_id";
-	}
+	$q_def = 	"SELECT flight.flight_id, country.name, city.name, airport.name, flight.departure_time,
+				A.country_name, A.city_name, A.airport_name, A.arrival_time,
+				flight.capacity, flight.booked
+				FROM airport, city, country, flight
+				INNER JOIN (
+					SELECT flight.flight_id, 
+					airport.name AS airport_name, 
+					city.name AS city_name, 
+					country.name AS country_name,
+					flight.arrival_time 
+					FROM airport, city, country, flight 
+					WHERE flight.destination = airport.airport_id
+					AND airport.cid = city.city_id
+					AND city.cid = country.country_id ";
 	
-	else {
-		$q_def =
-		"SELECT flight.flight_id, country.name, city.name, airport.name, flight.departure_time,
-		A.country_name, A.city_name, A.airport_name, A.arrival_time, flight.capacity, flight.booked
-		FROM airport, city, country, flight
-		INNER JOIN (
-			SELECT flight.flight_id, 
-			airport.name AS airport_name, 
-			city.name AS city_name, 
-			country.name AS country_name,
-			user_flight.fid AS c_fid,
-			user_flight.uid AS c_uid,  
-			flight.arrival_time 
-			FROM airport, city, country, flight, user_flight 
-			WHERE flight.destination = airport.airport_id
-			AND airport.cid = city.city_id
-			AND city.cid = country.country_id";
-	}
-			
 	if ($_GET['country_arrive'] != 'NONE') {
 		$q_def .= "AND country.name = ? ";
+		array_push($param_arr, $_GET['country_arrive']);
 	}
 	
 	if ($_GET['city_arrive'] != 'NONE') {
@@ -510,12 +383,12 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 		$q_def .= "AND airport.name = ? ";
 		array_push($param_arr, $_GET['airport_arrive']);
 	}
-	
+		
 	$q_def .= ") A ON flight.flight_id = A.flight_id
-		WHERE flight.source = airport.airport_id
-		AND airport.cid = city.city_id
-		AND city.cid = country.country_id ";	
-	
+				WHERE flight.source = airport.airport_id
+				AND airport.cid = city.city_id
+				AND city.cid = country.country_id ";
+				
 	if ($_GET['country_depart'] != 'NONE') {
 		$q_def .= "AND country.name = ? ";
 		array_push($param_arr, $_GET['country_depart']);
@@ -531,48 +404,37 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 		array_push($param_arr, $_GET['airport_depart']);
 	}
 	
-	if ($_GET['searchtype'] == 'noton') {
-	
-		$q_def .= "AND (NOT EXISTS (SELECT * FROM user_flight WHERE flight.flight_id = user_flight.fid) 
-			OR NOT EXISTS (SELECT * FROM user_flight WHERE flight.flight_id = user_flight.fid 
-			AND user_flight.uid = ?))"; 
-	}		
-	
-	else {
-		$q_def .= " AND A.c_fid = flight.flight_id AND A.c_uid = ?";
-	}
-	
-	$q_def .= " AND flight.departure_time BETWEEN ? AND ?
+	$q_def .= "AND flight.departure_time BETWEEN ? AND ?
 		ORDER BY country.name, city.name, airport.name, flight.departure_time, 
-		A.city_name, A.airport_name, A.arrival_time, flight.capacity, flight.booked";
-	
+		A.city_name, A.airport_name, A.arrival_time, flight.capacity, flight.booked ";
+
 	//Prepare and execute query 
 	$stmt = $mysql->prepare($q_def);
-		
+	
 	if (count($param_arr) === 0) {
-		$stmt->bind_param("dss",$_SESSION['user_id'],$_GET['min'],$_GET['max']);
+		$stmt->bind_param("ss",$_GET['min'],$_GET['max']);
 	}
-	else if (count($param_arr) === 1 && $count === 0) {
-		$stmt->bind_param("sdss", $param_arr[0], $_GET['min'],$_GET['max']);
+	else if (count($param_arr) === 1) {
+		$stmt->bind_param("sss", $param_arr[0], $_GET['min'],$_GET['max']);
 	}
 	else if (count($param_arr) === 2) {
-		$stmt->bind_param("ssdss", $param_arr[0], $param_arr[1], $_SESSION['user_id'], $_GET['min'],$_GET['max']);
+		$stmt->bind_param("ssss", $param_arr[0], $param_arr[1], $_GET['min'],$_GET['max']);
 	}
 	else if (count($param_arr) === 3) {
-		$stmt->bind_param("sssdss", $param_arr[0], $param_arr[1], $param_arr[2], $_SESSION['user_id'],
+		$stmt->bind_param("sssss", $param_arr[0], $param_arr[1], $param_arr[2], 
 		$_GET['min'],$_GET['max']);
 	}
 	else if (count($param_arr) === 4) {
-		$stmt->bind_param("ssssdss", $param_arr[0], $param_arr[1], $param_arr[2], 
-		$param_arr[3], $_SESSION['user_id'], $_GET['min'],$_GET['max']);
+		$stmt->bind_param("ssssss", $param_arr[0], $param_arr[1], $param_arr[2], 
+		$param_arr[3], $_GET['min'],$_GET['max']);
 	}
 	else if (count($param_arr) === 5) {
-		$stmt->bind_param("sssssdss", $param_arr[0], $param_arr[1], $param_arr[2], 
-		$param_arr[3], $param_arr[4], $_SESSION['user_id'], $_GET['min'],$_GET['max']);
+		$stmt->bind_param("sssssss", $param_arr[0], $param_arr[1], $param_arr[2], 
+		$param_arr[3], $param_arr[4], $_GET['min'],$_GET['max']);
 	}
 	else if (count($param_arr) === 6) {
-		$stmt->bind_param("ssssssdss", $param_arr[0], $param_arr[1], $param_arr[2], 
-		$param_arr[3], $param_arr[4], $param_arr[5], $_SESSION['user_id'], $_GET['min'],$_GET['max']);
+		$stmt->bind_param("ssssssss", $param_arr[0], $param_arr[1], $param_arr[2], 
+		$param_arr[3], $param_arr[4], $param_arr[5], $_GET['min'],$_GET['max']);
 	}
 				
 	$stmt->execute();
@@ -582,4 +444,5 @@ else if(isset($_GET['action_type']) && $_GET['action_type'] == 'flight' && $_GET
 	print($dxml->asXML());	
 	$stmt->close();	
 }
+
 ?>
