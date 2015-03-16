@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset='UTF-8'>
+		<title>Flight_Bookings</title>
+		<script src='main_functions.js'></script>
+		<link rel="stylesheet" type="text/css" href="style.css">
+	</head>
+	<body hidden='true'>			
+		<br>
+			<h1>CLICK HERE TO LOG OUT:</h1>
+			<input type='button' value='Logout' onclick="logout()">
+		<br>
+		<header>Browse Available Flights:</header>
+		<br>
+		<form header='Select_Flight'>
+			<label for='user_country_depart'>Choose Departure Country:</label>
+			<select name='country' id='user_country_depart' value='NONE' onchange="
+					fillListByID('country', 'city', 'cid', 'user_country_depart', 'user_city_depart'),
+					clearListByID('user_airport_depart')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='user_city_depart'>Choose Departure City:</label>
+			<select name='city' id='user_city_depart' value='NONE' onchange="
+					fillListByID('city', 'airport', 'cid', 'user_city_depart', 'user_airport_depart')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='user_airport_depart'>Choose Departure Airport:</label>
+			<select name='airport' id='user_airport_depart' value='NONE'>
+				<option value="NONE">NONE</option>
+			</select>
+			<br>		
+			<label for='user_country_arrive'>Choose Destination Country:</label>
+			<select name='country' id='user_country_arrive' value='NONE' onchange="
+					fillListByID('country', 'city', 'cid', 'user_country_arrive', 'user_city_arrive'),
+					clearListByID('user_airport_arrive')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='user_city_arrive'>Choose Destination City:</label>
+			<select name='city' id='user_city_arrive' value='NONE' onchange="
+					fillListByID('city', 'airport', 'cid', 'user_city_arrive', 'user_airport_arrive')">
+				<option value="NONE">NONE</option>
+			</select>
+			<label for='user_airport_arrive'>Choose Destination Airport:</label>
+			<select name='airport' id='user_airport_arrive' value='NONE'>
+				<option value="NONE">NONE</option>
+			</select>
+			<br>
+			<h1>SEARCH FLIGHTS BY TIME/LOCATION (SELECT DATE/TIME RANGE FOR YOUR FLIGHT):</h1>
+			<label for='user_min_time_day'>Departure Date (Min):</label><br>
+			<select name='day' id='user_min_time_day' value='NONE' onchange="">	
+			</select>
+			<select name='month' id='user_min_time_month' value='NONE' onchange=
+					"updateDays(this, 'user_min_time_day')" onload = 
+					"updateDays(this, 'user_min_time_day')">	
+			</select>
+			<select name='year' id='user_min_time_year' value='NONE' onchange=
+					"updateMonths(this, 'user_min_time_month')" onload = 
+					"updateMonths(this, 'user_min_time_month')">	
+			</select>
+			<br> 		
+			<label for='user_min_time_hour'>Departure Time (Min):</label><br>
+			<select name='hour' id='user_min_time_hour' value='00' onchange="">'00'	
+			</select>
+			<label for='user_min_time_minutes'>:</label>
+			<select name='minutes' id='user_min_time_minutes' value='00' onchange="">'00'	
+			</select>
+			<br>		
+			<label for='user_max_time_day'>Departure Date (Max):</label><br>
+			<select name='day' id='user_max_time_day' value='NONE' onchange="">	
+			</select>
+			<select name='month' id='user_max_time_month' value='NONE' onchange=
+					"updateDays(this, 'user_max_time_day')
+					updateDays(this, 'user_max_time_day')";					 
+				onload = 
+					"updateDays(this, 'user_max_time_day')">	
+			</select>
+			<select name='year' id='user_max_time_year' value='NONE' onchange=
+					"updateMonths(this, 'user_max_time_month'); 
+					updateMonths(this, 'user_max_time_month')"					
+				onload = 
+					"updateMonths(this, 'user_max_time_month')">
+			</select>
+			<br> 	
+			<label for='user_max_time_hour'>Departure Time (Max):</label><br>
+			<select name='hour' id='user_max_time_hour' value='00' onchange="">'00'	
+			</select>
+			<label for='user_max_time_minutes'>:</label>
+			<select name='minutes' id='user_max_time_minutes' value='00' onchange="">'00'	
+			</select>
+			<br>
+			<input type='button' value='Book Flights' onclick="searchFlights(bookFlight, 'flight_Results')">
+			<input type='button' value='Cancel Flights' onclick="searchFlights(unbookFlight, 'flight_Results')">
+		</form>		
+		<br>
+		<div id='table_Head'></div>	
+		<div id='flight_Results'></div>		
+	</body>
+</html>

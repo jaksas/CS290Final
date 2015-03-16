@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset='UTF-8'>
+		<title>Flight_Bookings</title>
+		<script src='login_functions.js'></script>
+		<link rel="stylesheet" type="text/css" href="style.css">
+	</head>
+	<body>
+		<form header='Create New User Account'>
+			<label for='user_name'>Choose New User Name:</label>
+			<br>
+			<input type='text' id='user_name' value=''>
+			<br>
+			<label for='user_password'>Choose New User Password:</label>
+			<br>
+			<input type='password' id='user_password' value=''><br>
+			<input type='button' value='Create Account' onclick="validateUser('user_name', 
+				'user_password', 'login_result', 'new')">
+			<br>
+		</form>	
+		<div id='login_result'></div>	
+		<form header='Login With Existing Account'>
+			<label for='user_name_x'>Enter User Name:</label>
+			<br>
+			<input type='text' id='user_name_x' value=''>
+			<br>
+			<label for='user_password_x'>Enter Password:</label>
+			<br>
+			<input type='password' id='user_password_x' value=''><br>
+			<input type='button' value='Login' onclick="validateUser('user_name_x', 
+				'user_password_x', 'login_result_x', 'existing')">
+			<br>
+		</form>	
+		<div id='login_result_x'></div>	
+	</body>
+</html>
